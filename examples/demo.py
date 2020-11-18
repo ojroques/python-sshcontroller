@@ -51,9 +51,12 @@ def demo_pwd():
         user="root",
         ssh_password=SSH_PWD
     )
-    output = queue.Queue()
+    ssh_controller.connect()
+
+    output = queue.Queue()  # a queue to store the ping command output
     stop_event_sleep = threading.Event()
     stop_event_ping = threading.Event()
+
     kwargs_sleep = {
         "command": "echo 'thread sleep: sleeping for 10s' && sleep 10s",
         "display": True,
@@ -66,10 +69,9 @@ def demo_pwd():
         "stop_event": stop_event_ping,
     }
 
+    # call run() and store the command output in the queue
     def wrapper(kwargs):
         return output.put(ssh_controller.run(**kwargs))
-
-    ssh_controller.connect()
 
     thread_sleep = threading.Thread(
         target=ssh_controller.run, name="thread_sleep", kwargs=kwargs_sleep)
