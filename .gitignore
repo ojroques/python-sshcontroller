@@ -3,4 +3,4 @@
 __pycache__/
 build/
 dist/
-sshcontroller_oroques.egg-info
+sshcontroller_oroques.egg-info/
