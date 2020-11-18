@@ -16,7 +16,7 @@ def demo_key():
     ssh_controller = sshcontroller.SSHController(
         host=HOST_IP,
         user="olivier",
-        key_path="~/.ssh/id_rsa",  # if omitted, look in agent and in ~/.ssh
+        key_path="~/.ssh/id_rsa",  # if omitted, look for keys in SSH agent and in ~/.ssh/
         key_password=KEY_PWD,      # optional
         key_type="rsa",            # rsa (default), dsa, ecdsa or ed25519
         port=22,                   # 22 is the default
@@ -27,8 +27,8 @@ def demo_key():
     return_code, output = ssh_controller.run(
         command="echo 'Hello world!' > /tmp/hello.txt",
         display=True,          # display output, false by default
-        combine_stderr=False,  # combine stderr and stdout, false by default
         capture_output=True,   # return output, false by default
+        combine_stderr=False,  # combine stderr and stdout, false by default
         timeout=10,            # command timeout in seconds, 600s by default
     )
     logging.info(f"return code: {return_code}, output: {output}")
@@ -48,7 +48,7 @@ def demo_key():
 def demo_pwd():
     ssh_controller = sshcontroller.SSHController(
         host=HOST_IP,
-        user="root",
+        user="olivier",
         ssh_password=SSH_PWD
     )
     ssh_controller.connect()
