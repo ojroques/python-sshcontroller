@@ -1,8 +1,8 @@
 # python-sshcontroller
 
-This package implements a simple interface to communicate and exchange data
-with remote hosts via SSH. At its core, it is a wrapper around the extensive
-SSH library [paramiko](https://github.com/paramiko/paramiko/).
+This small package implements a simple interface to communicate and exchange
+data with remote hosts via SSH. It is essentially a wrapper around the
+extensive SSH library [paramiko](https://github.com/paramiko/paramiko/).
 
 ## Installation
 Run:
@@ -14,7 +14,8 @@ Note that the package has been exclusively tested on Python 3.6+.
 
 ## Usage
 
-All code snippets can also be found at [demo.py](./examples/demo.py).
+All code snippets can also be found at
+[demo.py](https://github.com/ojroques/python-sshcontroller/blob/main/examples/demo.py).
 
 #### 1. Create a new SSH controller from a SSH key
 ```python
@@ -156,4 +157,4 @@ ssh_controller.disconnect()
 ```
 
 ## License
-[GNU Lesser General Public License v2.1](LICENSE)
+[GNU Lesser General Public License v2.1](https://github.com/ojroques/python-sshcontroller/blob/main/LICENSE)
