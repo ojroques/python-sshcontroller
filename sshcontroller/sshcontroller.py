@@ -69,18 +69,22 @@ class SSHController:
                 )
             )
         elif ssh_password is None:
+            self.keys = paramiko.Agent().get_keys()
+
             try:
-                self.keys.append(
-                    _KEY_TYPES[key_type].from_private_key(
-                        open(path.expanduser(f"~/.ssh/id_{key_type}"), 'r'),
-                        key_password
-                    )
+                key_file = _KEY_TYPES[key_type].from_private_key(
+                    open(path.expanduser(f"~/.ssh/id_{key_type}"), 'r'),
+                    key_password
                 )
-            except Exception as e:
-                agent_keys = paramiko.Agent().get_keys()
-                if not agent_keys:
-                    raise e
-                self.keys = agent_keys
+            except Exception:
+                pass
+            else:
+                self.keys.insert(
+                    len(self.keys) if key_password is None else 0, key_file
+                )
+
+            if not self.keys:
+                logging.error("No valid key found")
 
     def connect(self):
         try:
@@ -123,7 +127,7 @@ class SSHController:
         capture_output=False,
     ):
         channel = self.transport.open_session()
-        output = []
+        output = ""
         timeout = 2
 
         channel.settimeout(timeout)
@@ -145,10 +149,10 @@ class SSHController:
                 if not len(raw_data):
                     break
 
-                data = raw_data.decode("utf-8").splitlines()
+                data = raw_data.decode("utf-8")
 
                 if display:
-                    print('\n'.join(data))
+                    print(data, end='')
 
                 if capture_output:
                     output += data
@@ -157,7 +161,7 @@ class SSHController:
                     break
 
         channel.close()
-        return (channel.exit_status_ready(), output)
+        return (channel.exit_status_ready(), output.splitlines())
 
     def __run_until_exit(
         self,
@@ -168,7 +172,7 @@ class SSHController:
         capture_output=False,
     ):
         channel = self.transport.open_session()
-        output = []
+        output = ""
 
         channel.settimeout(timeout)
         channel.set_combine_stderr(combine_stderr)
@@ -177,7 +181,7 @@ class SSHController:
 
         try:
             if not display and not capture_output:
-                return (channel.recv_exit_status(), output)
+                return (channel.recv_exit_status(), output.splitlines())
             else:
                 while True:
                     raw_data = channel.recv(self.nb_bytes)
@@ -185,23 +189,23 @@ class SSHController:
                     if not len(raw_data):
                         break
 
-                    data = raw_data.decode("utf-8").splitlines()
+                    data = raw_data.decode("utf-8")
 
                     if display:
-                        print('\n'.join(data))
+                        print(data, end='')
 
                     if capture_output:
                         output += data
         except socket.timeout:
             logging.warning(f"Timeout after {timeout}s")
-            return (1, output)
+            return (1, output.splitlines())
         except KeyboardInterrupt:
             logging.info("KeyboardInterrupt")
-            return (0, output)
+            return (0, output.splitlines())
         finally:
             channel.close()
 
-        return (channel.recv_exit_status(), output)
+        return (channel.recv_exit_status(), output.splitlines())
 
     def run(
         self,
