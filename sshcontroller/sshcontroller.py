@@ -160,7 +160,11 @@ class SSHController:
                     break
 
         channel.close()
-        return (channel.exit_status_ready(), output.splitlines())
+
+        if not channel.exit_status_ready():
+            return (0, output.splitlines())
+
+        return (channel.recv_exit_status(), output.splitlines())
 
     def __run_until_exit(
         self,
