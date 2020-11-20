@@ -122,16 +122,19 @@ class SSHController:
         command,
         stop_event,
         display=True,
-        combine_stderr=False,
         capture_output=False,
+        shell=True,
+        combine_stderr=False,
     ):
         channel = self.transport.open_session()
         output = ""
-        timeout = 2
 
-        channel.settimeout(timeout)
+        channel.settimeout(2)
         channel.set_combine_stderr(combine_stderr)
-        channel.get_pty()
+
+        if shell:
+            channel.get_pty()
+
         channel.exec_command(command)
 
         if not display and not capture_output:
@@ -171,15 +174,19 @@ class SSHController:
         command,
         timeout,
         display=True,
-        combine_stderr=False,
         capture_output=False,
+        shell=True,
+        combine_stderr=False,
     ):
         channel = self.transport.open_session()
         output = ""
 
         channel.settimeout(timeout)
         channel.set_combine_stderr(combine_stderr)
-        channel.get_pty()
+
+        if shell:
+            channel.get_pty()
+
         channel.exec_command(command)
 
         try:
@@ -214,16 +221,18 @@ class SSHController:
         self,
         command,
         display=False,
-        combine_stderr=False,
         capture_output=False,
+        shell=True,
+        combine_stderr=False,
+        timeout=None,
         stop_event=None,
-        timeout=600,
     ):
         if stop_event:
             return self.__run_until_event(
                 command,
                 stop_event,
                 display=display,
+                shell=shell,
                 combine_stderr=combine_stderr,
                 capture_output=capture_output,
             )
@@ -232,6 +241,7 @@ class SSHController:
                 command,
                 timeout,
                 display=display,
+                shell=shell,
                 combine_stderr=combine_stderr,
                 capture_output=capture_output,
             )
@@ -245,8 +255,11 @@ class SSHController:
             if not self.transport.is_authenticated():
                 logging.error("SSH session is not ready")
                 return 1
+
             sftp_channel = SFTPController.from_transport(self.transport)
             r = getattr(sftp_channel, target)(*args, **kwargs)
             sftp_channel.close()
+
             return r
+
         return wrapper

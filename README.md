@@ -44,9 +44,13 @@ ssh_controller.connect()
 return_code, output = ssh_controller.run(
     command="echo 'Hello world!' > /tmp/hello.txt",
     display=True,          # display output, false by default
-    capture_output=True,   # return output, false by default
-    combine_stderr=False,  # combine stderr and stdout, false by default
-    timeout=10,            # command timeout in seconds, 600s by default
+    capture_output=True,   # save output, false by default
+    # request a shell to run the command, true by default
+    shell=True,
+    # combine stderr into stdout when shell=False, false by default
+    combine_stderr=False,
+    # command timeout in seconds, None (wait indefinitely) by default
+    timeout=10,
 )
 print(f"return code: {return_code}, output: {output}")
 ```

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sshcontroller",
-    version="1.1",
+    version="1.2",
     author="Olivier Roques",
     author_email="olivier@oroques.dev",
     description="A package to easily run SSH commands",
