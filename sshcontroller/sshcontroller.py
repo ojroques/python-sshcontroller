@@ -76,9 +76,7 @@ class SSHController:
             else:
                 index = len(self.keys) if key_password is None else 0
                 self.keys.insert(index, key)
-
-            if not self.keys:
-                logging.error("No valid key found")
+            if not self.keys: logging.error("No valid key found")
 
     def connect(self):
         try:
@@ -123,8 +121,7 @@ class SSHController:
         channel = self.transport.open_session()
         channel.settimeout(2)
         channel.set_combine_stderr(combine_stderr)
-        if shell:
-            channel.get_pty()
+        if shell: channel.get_pty()
         channel.exec_command(command)
 
         if not display and not capture:
@@ -134,19 +131,13 @@ class SSHController:
                 try:
                     raw_data = channel.recv(self.nb_bytes)
                 except socket.timeout:
-                    if stop_event.is_set():
-                        break
+                    if stop_event.is_set(): break
                     continue
-
-                if not raw_data:
-                    break
+                if not raw_data: break
                 data = raw_data.decode("utf-8")
-                if display:
-                    print(data, end='')
-                if capture:
-                    output += data
-                if stop_event.is_set():
-                    break
+                if display: print(data, end='')
+                if capture: output += data
+                if stop_event.is_set(): break
 
         channel.close()
 
@@ -168,8 +159,7 @@ class SSHController:
         channel = self.transport.open_session()
         channel.settimeout(timeout)
         channel.set_combine_stderr(combine_stderr)
-        if shell:
-            channel.get_pty()
+        if shell: channel.get_pty()
         channel.exec_command(command)
 
         try:
@@ -178,13 +168,10 @@ class SSHController:
             else:
                 while True:
                     raw_data = channel.recv(self.nb_bytes)
-                    if not raw_data:
-                        break
+                    if not raw_data: break
                     data = raw_data.decode("utf-8")
-                    if display:
-                        print(data, end='')
-                    if capture:
-                        output += data
+                    if display: print(data, end='')
+                    if capture: output += data
         except socket.timeout:
             logging.warning(f"Timeout after {timeout}s")
             exit_code = 1
@@ -235,7 +222,6 @@ class SSHController:
             if not self.transport.is_authenticated():
                 logging.error("SSH session is not ready")
                 return
-
             sftp_channel = SFTPController.from_transport(self.transport)
             r = getattr(sftp_channel, target)(*args, **kwargs)
             sftp_channel.close()
