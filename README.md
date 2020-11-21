@@ -41,18 +41,15 @@ ssh_controller.connect()
 
 #### 3. Run a command
 ```python
-return_code, output = ssh_controller.run(
+exit_code, output = ssh_controller.run(
     command="echo 'Hello world!' > /tmp/hello.txt",
-    display=True,  # display output, false by default
-    capture=True,  # save output, false by default
-    # request a shell to run the command, true by default
-    shell=True,
-    # combine stderr into stdout when shell=False, false by default
-    combine_stderr=False,
-    # command timeout in seconds, None (wait indefinitely) by default
-    timeout=10,
+    display=True,          # display output, disabled by default
+    capture=True,          # save output, disabled by default
+    shell=True,            # request a shell to run the command, enabled by default
+    combine_stderr=False,  # combine stderr into stdout when shell=False, disabled by default
+    timeout=10,            # command timeout in seconds, None (wait indefinitely) by default
 )
-print(f"return code: {return_code}, output: {output}")
+print(f"exit code: {exit_code}, output: {output}")
 ```
 
 #### 4. Transfer data with SFTP
@@ -98,13 +95,13 @@ ssh_controller.connect()
 ```
 
 #### 7. Run a command until an event is set
-If the argument `stop_event` is set when calling `run()`, the controller
-ignores `timeout` and stops only when the given event is triggered instead.
-This is especially useful when using threads.
+If the argument `stop_event` (a `threading.Event` object) is set when
+calling `run()`, the controller ignores `timeout` and stops when the given
+event is triggered instead. This is especially useful when using threads.
 
 The example below starts two threads with an event attached to each one:
-one is pinging localhost, the other sleeps for 10s. When the sleeping threads
-has finished, the events are triggered to also stop the pinging thread.
+one is pinging `localhost`, the other sleeps for 10s. When the sleeping thread
+has finished, events are triggered to also stop the pinging thread.
 
 ```python
 import logging
@@ -153,8 +150,8 @@ finally:
     stop_event_ping.set()
     time.sleep(2)
 
-return_code, ping_output = output.get()
-logging.info(f"thread ping return code: {return_code}")
+exit_code, ping_output = output.get()
+logging.info(f"thread ping exit code: {exit_code}")
 logging.info(f"thread ping output length: {len(ping_output)}")
 
 ssh_controller.disconnect()

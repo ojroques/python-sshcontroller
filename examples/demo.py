@@ -19,23 +19,23 @@ def demo_key():
         key_path="~/.ssh/id_rsa",  # if omitted, look in agent and in ~/.ssh/
         key_password=KEY_PWD,  # optional
         key_type="rsa",  # rsa (default), dsa, ecdsa or ed25519
-        port=22,  # 22 is the default
+        port=22,  # 22 by default
     )
 
     ssh_controller.connect()
 
-    return_code, output = ssh_controller.run(
+    exit_code, output = ssh_controller.run(
         command="echo 'Hello world!' > /tmp/hello.txt",
-        display=True,  # display output, false by default
-        capture=True,  # save output, false by default
-        # request a shell to run the command, true by default
+        display=True,  # display output, disabled by default
+        capture=True,  # save output, disabled by default
+        # request a shell to run the command, enabled by default
         shell=True,
-        # combine stderr into stdout when shell=False, false by default
+        # combine stderr into stdout when shell=False, disabled by default
         combine_stderr=False,
         # command timeout in seconds, None (wait indefinitely) by default
         timeout=10,
     )
-    logging.info(f"return code: {return_code}, output: {output}")
+    logging.info(f"exit code: {exit_code}, output: {output}")
 
     print(f"hello.txt exists: {ssh_controller.exists('/tmp/hello.txt')}")
     print(f"bonjour.txt exists: {ssh_controller.exists('/tmp/bonjour.txt')}")
@@ -95,8 +95,8 @@ def demo_pwd():
         stop_event_ping.set()
         time.sleep(2)
 
-    return_code, ping_output = output.get()
-    logging.info(f"thread ping return code: {return_code}")
+    exit_code, ping_output = output.get()
+    logging.info(f"thread ping exit code: {exit_code}")
     logging.info(f"thread ping output length: {len(ping_output)}")
 
     ssh_controller.disconnect()
