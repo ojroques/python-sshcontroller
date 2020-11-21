@@ -16,18 +16,18 @@ def demo_key():
     ssh_controller = sshcontroller.SSHController(
         host=HOST_IP,
         user="olivier",
-        key_path="~/.ssh/id_rsa",  # if omitted, look for keys in SSH agent and in ~/.ssh/
-        key_password=KEY_PWD,      # optional
-        key_type="rsa",            # rsa (default), dsa, ecdsa or ed25519
-        port=22,                   # 22 is the default
+        key_path="~/.ssh/id_rsa",  # if omitted, look in agent and in ~/.ssh/
+        key_password=KEY_PWD,  # optional
+        key_type="rsa",  # rsa (default), dsa, ecdsa or ed25519
+        port=22,  # 22 is the default
     )
 
     ssh_controller.connect()
 
     return_code, output = ssh_controller.run(
         command="echo 'Hello world!' > /tmp/hello.txt",
-        display=True,          # display output, false by default
-        capture_output=True,   # save output, false by default
+        display=True,  # display output, false by default
+        capture=True,  # save output, false by default
         # request a shell to run the command, true by default
         shell=True,
         # combine stderr into stdout when shell=False, false by default
@@ -50,11 +50,9 @@ def demo_key():
 
 
 def demo_pwd():
-    ssh_controller = sshcontroller.SSHController(
-        host=HOST_IP,
-        user="olivier",
-        ssh_password=SSH_PWD
-    )
+    ssh_controller = sshcontroller.SSHController(host=HOST_IP,
+                                                 user="olivier",
+                                                 ssh_password=SSH_PWD)
     ssh_controller.connect()
 
     output = queue.Queue()  # a queue to store the ping command output
@@ -69,7 +67,7 @@ def demo_pwd():
     kwargs_ping = {
         "command": "echo 'thread ping: starting ping' && ping localhost",
         "display": True,
-        "capture_output": True,
+        "capture": True,
         "stop_event": stop_event_ping,
     }
 
@@ -77,10 +75,12 @@ def demo_pwd():
     def wrapper(kwargs):
         return output.put(ssh_controller.run(**kwargs))
 
-    thread_sleep = threading.Thread(
-        target=ssh_controller.run, name="thread_sleep", kwargs=kwargs_sleep)
-    thread_ping = threading.Thread(
-        target=wrapper, name="thread_ping", args=(kwargs_ping, ))
+    thread_sleep = threading.Thread(target=ssh_controller.run,
+                                    name="thread_sleep",
+                                    kwargs=kwargs_sleep)
+    thread_ping = threading.Thread(target=wrapper,
+                                   name="thread_ping",
+                                   args=(kwargs_ping, ))
 
     thread_ping.start()
     thread_sleep.start()

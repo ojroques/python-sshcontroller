@@ -43,8 +43,8 @@ ssh_controller.connect()
 ```python
 return_code, output = ssh_controller.run(
     command="echo 'Hello world!' > /tmp/hello.txt",
-    display=True,          # display output, false by default
-    capture_output=True,   # save output, false by default
+    display=True,  # display output, false by default
+    capture=True,  # save output, false by default
     # request a shell to run the command, true by default
     shell=True,
     # combine stderr into stdout when shell=False, false by default
@@ -127,7 +127,7 @@ kwargs_sleep = {
 kwargs_ping = {
     "command": "echo 'thread ping: starting ping' && ping localhost",
     "display": True,
-    "capture_output": True,
+    "capture": True,
     "stop_event": stop_event_ping,
 }
 

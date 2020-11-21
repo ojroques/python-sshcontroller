@@ -1,1 +1,1 @@
-from sshcontroller.sshcontroller import SSHController, SFTPController
+from .sshcontroller import SSHController, SFTPController

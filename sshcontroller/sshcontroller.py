@@ -54,33 +54,28 @@ class SSHController:
     ):
         self.host = host
         self.user = user
-        self.ssh_password = ssh_password if key_path is None else None
+        self.ssh_password = ssh_password if not key_path else None
         self.port = port
         self.nb_bytes = 1024
-        self.keys, self.transport = [], None
+        self.keys = []
+        self.transport = None
         key_type = key_type.lower()
 
         if key_path:
-            self.keys.append(
-                _KEY_TYPES[key_type].from_private_key(
-                    open(path.expanduser(key_path), 'r'),
-                    key_password,
-                )
-            )
+            key_file = open(path.expanduser(key_path), 'r')
+            key = _KEY_TYPES[key_type].from_private_key(key_file, key_password)
+            self.keys.append(key)
         elif ssh_password is None:
             self.keys = paramiko.Agent().get_keys()
-
             try:
-                key_file = _KEY_TYPES[key_type].from_private_key(
-                    open(path.expanduser(f"~/.ssh/id_{key_type}"), 'r'),
-                    key_password
-                )
+                key_file = open(path.expanduser(f"~/.ssh/id_{key_type}"), 'r')
+                key = _KEY_TYPES[key_type].from_private_key(
+                    key_file, key_password)
             except Exception:
                 pass
             else:
-                self.keys.insert(
-                    len(self.keys) if key_password is None else 0, key_file
-                )
+                index = len(self.keys) if key_password is None else 0
+                self.keys.insert(index, key)
 
             if not self.keys:
                 logging.error("No valid key found")
@@ -96,10 +91,8 @@ class SSHController:
 
         if self.ssh_password is not None:
             try:
-                self.transport.connect(
-                    username=self.user,
-                    password=self.ssh_password,
-                )
+                self.transport.connect(username=self.user,
+                                       password=self.ssh_password)
             except paramiko.SSHException:
                 pass
         else:
@@ -117,27 +110,24 @@ class SSHController:
         logging.info(f"Successfully connected to {self.user}@{self.host}")
         return 0
 
-    def __run_until_event(
+    def _run_until_event(
         self,
         command,
         stop_event,
         display=True,
-        capture_output=False,
+        capture=False,
         shell=True,
         combine_stderr=False,
     ):
+        exit_code, output = 0, ""
         channel = self.transport.open_session()
-        output = ""
-
         channel.settimeout(2)
         channel.set_combine_stderr(combine_stderr)
-
         if shell:
             channel.get_pty()
-
         channel.exec_command(command)
 
-        if not display and not capture_output:
+        if not display and not capture:
             stop_event.wait()
         else:
             while True:
@@ -148,102 +138,92 @@ class SSHController:
                         break
                     continue
 
-                if not len(raw_data):
+                if not raw_data:
                     break
-
                 data = raw_data.decode("utf-8")
-
                 if display:
                     print(data, end='')
-
-                if capture_output:
+                if capture:
                     output += data
-
                 if stop_event.is_set():
                     break
 
         channel.close()
 
-        if not channel.exit_status_ready():
-            return (0, output.splitlines())
+        if channel.exit_status_ready():
+            exit_code = channel.recv_exit_status()
 
-        return (channel.recv_exit_status(), output.splitlines())
+        return (exit_code, output.splitlines())
 
-    def __run_until_exit(
+    def _run_until_exit(
         self,
         command,
         timeout,
         display=True,
-        capture_output=False,
+        capture=False,
         shell=True,
         combine_stderr=False,
     ):
+        exit_code, output = 0, ""
         channel = self.transport.open_session()
-        output = ""
-
         channel.settimeout(timeout)
         channel.set_combine_stderr(combine_stderr)
-
         if shell:
             channel.get_pty()
-
         channel.exec_command(command)
 
         try:
-            if not display and not capture_output:
+            if not display and not capture:
                 return (channel.recv_exit_status(), output.splitlines())
             else:
                 while True:
                     raw_data = channel.recv(self.nb_bytes)
-
-                    if not len(raw_data):
+                    if not raw_data:
                         break
-
                     data = raw_data.decode("utf-8")
-
                     if display:
                         print(data, end='')
-
-                    if capture_output:
+                    if capture:
                         output += data
         except socket.timeout:
             logging.warning(f"Timeout after {timeout}s")
-            return (1, output.splitlines())
+            exit_code = 1
         except KeyboardInterrupt:
             logging.info("KeyboardInterrupt")
-            return (0, output.splitlines())
+            exit_code = 0
+        else:
+            exit_code = channel.recv_exit_status()
         finally:
             channel.close()
-
-        return (channel.recv_exit_status(), output.splitlines())
+            return (exit_code, output.splitlines())
 
     def run(
         self,
         command,
         display=False,
-        capture_output=False,
+        capture=False,
         shell=True,
         combine_stderr=False,
         timeout=None,
         stop_event=None,
     ):
-        if stop_event:
-            return self.__run_until_event(
+        if stop_event is not None:
+            return self._run_until_event(
                 command,
                 stop_event,
                 display=display,
                 shell=shell,
                 combine_stderr=combine_stderr,
-                capture_output=capture_output,
+                capture=capture,
             )
         else:
-            return self.__run_until_exit(
+            return self._run_until_exit(
                 command,
                 timeout,
                 display=display,
                 shell=shell,
                 combine_stderr=combine_stderr,
-                capture_output=capture_output,
+                capture=capture,
             )
 
     def disconnect(self):
@@ -254,12 +234,11 @@ class SSHController:
         def wrapper(*args, **kwargs):
             if not self.transport.is_authenticated():
                 logging.error("SSH session is not ready")
-                return 1
+                return
 
             sftp_channel = SFTPController.from_transport(self.transport)
             r = getattr(sftp_channel, target)(*args, **kwargs)
             sftp_channel.close()
-
             return r
 
         return wrapper
