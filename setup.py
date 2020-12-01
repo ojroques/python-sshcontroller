@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sshcontroller",
-    version="1.3",
+    version="1.4",
     author="Olivier Roques",
     author_email="olivier@oroques.dev",
     description="A package to easily run SSH commands",
@@ -23,4 +23,5 @@ setuptools.setup(
         "Topic :: Software Development",
     ],
     python_requires='>=3.6',
+    install_requires=['paramiko'],
 )
